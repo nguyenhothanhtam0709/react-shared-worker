@@ -1,24 +1,79 @@
 import { useMemo, useState } from "react";
+import { Command, EventData, Todo } from "./commons/todo";
+
+function notifyMe(msg: string) {
+  if (Notification.permission === "granted") {
+    new Notification(msg);
+  } else if (Notification.permission !== "denied") {
+    Notification.requestPermission().then((permission) => {
+      if (permission === "granted") {
+        new Notification(msg);
+      }
+    });
+  }
+}
 
 function App() {
   const worker: SharedWorker = useMemo(
-    () => new SharedWorker(new URL("./workers/worker.ts", import.meta.url)),
+    () =>
+      new SharedWorker(new URL("./workers/worker.ts", import.meta.url), {
+        type: "module",
+      }),
     []
   );
 
-  const [str, setStr] = useState("");
+  const [todos, setTodos] = useState<Array<Todo>>([]);
 
-  worker.port.onmessage = (e: MessageEvent<string>) => {
+  worker.port.onmessage = (e: MessageEvent<EventData<any>>) => {
     if (e.data) {
-      setStr(`Receive from Worker: ${e.data} on ${Date.now()}`);
+      switch (e.data.cmd) {
+        case Command.GET_TODOS:
+          setTodos(e.data.data as Array<Todo>);
+          break;
+        case Command.MESSAGE:
+          notifyMe(e.data.data as string);
+          break;
+      }
     }
   };
 
   return (
     <>
-      <div>{str}</div>
-
-      <button onClick={() => worker.port.postMessage(Date.now())}>Hello</button>
+      <div>
+        <h1>List todo</h1>
+        <div>
+          {todos?.length &&
+            todos.map((i) => (
+              <div key={i.id}>
+                <span>id: {i.id} </span>
+                <span>title: {i.title} </span>
+                <span>content: {i.content} </span>
+              </div>
+            ))}
+        </div>
+      </div>
+      <button
+        onClick={() =>
+          worker.port.postMessage({
+            cmd: Command.GET_TODOS,
+          })
+        }
+      >
+        Retrieve
+      </button>
+      <button
+        onClick={() =>
+          worker.port.postMessage({
+            cmd: Command.CREATE_TODO,
+            data: {
+              title: `Title as ${Date.now()}`,
+              content: `Content as ${new Date()}`,
+            },
+          })
+        }
+      >
+        Create
+      </button>
     </>
   );
 }
