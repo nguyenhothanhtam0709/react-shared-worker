@@ -1,5 +1,6 @@
-import { useMemo, useState } from "react";
+import { useContext, useState } from "react";
 import { Command, EventData, Todo } from "./commons/todo";
+import { WorkerContext } from "./contexts/workerContext";
 
 function notifyMe(msg: string) {
   if (Notification.permission === "granted") {
@@ -14,13 +15,7 @@ function notifyMe(msg: string) {
 }
 
 function App() {
-  const worker: SharedWorker = useMemo(
-    () =>
-      new SharedWorker(new URL("./workers/worker.ts", import.meta.url), {
-        type: "module",
-      }),
-    []
-  );
+  const worker: SharedWorker = useContext(WorkerContext);
 
   const [todos, setTodos] = useState<Array<Todo>>([]);
 
