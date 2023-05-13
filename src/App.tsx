@@ -33,6 +33,12 @@ function App() {
         case Command.MESSAGE:
           notifyMe(e.data.data as string);
           break;
+        case Command.CREATE_TODO:
+          setTodos([...todos, e.data.data]);
+          break;
+        case Command.CLEAR_TODOS:
+          setTodos([]);
+          break;
       }
     }
   };
@@ -59,7 +65,16 @@ function App() {
           })
         }
       >
-        Retrieve
+        Retrieve All
+      </button>
+      <button
+        onClick={() =>
+          worker.port.postMessage({
+            cmd: Command.CLEAR_TODOS,
+          })
+        }
+      >
+        Clear All
       </button>
       <button
         onClick={() =>

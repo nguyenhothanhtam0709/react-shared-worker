@@ -6,6 +6,7 @@ export interface Todo {
 
 export enum Command {
   GET_TODOS = "GET_TODOS",
+  CLEAR_TODOS = "CLEAR_TODOS",
   CREATE_TODO = "CREATE_TODO",
   MESSAGE = "MESSAGE",
 }

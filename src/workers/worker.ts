@@ -37,8 +37,11 @@ db.todos.count().then((count) => {
   }
 });
 
+const ports: Array<MessagePort> = [];
+
 self.onconnect = (e: MessageEvent) => {
   const port = e.ports[0];
+  ports.push(port);
 
   port.addEventListener("message", (e: MessageEvent<EventData>) => {
     switch (e.data.cmd) {
@@ -52,10 +55,34 @@ self.onconnect = (e: MessageEvent) => {
         break;
 
       case Command.CREATE_TODO:
-        db.todos.add(e.data.data as any).then(() => {
+        db.todos.add(e.data.data as any).then((id: number) => {
+          // port.postMessage({
+          //   cmd: Command.MESSAGE,
+          //   data: "Create todo complete!",
+          // });
+          ports.forEach((port) => {
+            port.postMessage({
+              cmd: Command.CREATE_TODO,
+              data: {
+                id,
+                ...(e.data.data as any),
+              },
+            });
+          });
+        });
+        break;
+
+      case Command.CLEAR_TODOS:
+        db.todos.clear().then(() => {
           port.postMessage({
             cmd: Command.MESSAGE,
-            data: "Create todo complete!",
+            data: "Clean todos complete!",
+          });
+
+          ports.forEach((port) => {
+            port.postMessage({
+              cmd: Command.CLEAR_TODOS,
+            });
           });
         });
         break;
